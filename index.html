@@ -164,6 +164,7 @@ details.admin summary{list-style:none;cursor:pointer;padding:16px 20px;display:f
 details.admin summary::-webkit-details-marker{display:none;}
 details.admin summary .chev{margin-left:auto;transition:.2s;color:var(--ink-mute);font-size:13px;}
 details.admin[open] summary .chev{transform:rotate(180deg);}
+details.admin summary.locked{cursor:not-allowed;color:var(--ink-mute);}
 .admin-body{padding:2px 20px 20px;border-top:1px solid var(--green-100);}
 .admin-note{font-size:11.5px;color:var(--ink-soft);margin:12px 0 16px;background:var(--green-50);padding:10px 12px;border-radius:8px;}
 .admin-group{margin-bottom:18px;}
@@ -264,7 +265,7 @@ footer{text-align:center;font-size:11.5px;color:var(--ink-mute);padding:18px 0 6
 
   <!-- ADMIN / BACKEND -->
   <details class="admin" id="adminPanel">
-    <summary>⚙️ ตั้งค่าคำนวณ (หลังบ้าน / สูตรราคา)<span class="chev">▾</span></summary>
+    <summary id="adminSummary">⚙️ ตั้งค่าคำนวณ (หลังบ้าน / สูตรราคา)<span class="chev">▾</span></summary>
     <div class="admin-body">
       <p class="admin-note">แก้ไขค่าที่นี่ได้ตลอดเวลา ระบบจะคำนวณราคาใหม่ทันที (การแก้ไขนี้จะไม่ถูกบันทึกหลังปิดหน้าเว็บ)</p>
 
@@ -454,9 +455,25 @@ function scRenumber(){
   });
 }
 
+function updateAdminLock(){
+  const codeOk = hasValidAccessCode();
+  const panel = document.getElementById('adminPanel');
+  const summary = document.getElementById('adminSummary');
+  if(!panel || !summary) return;
+  if(!codeOk){
+    panel.removeAttribute('open');
+    summary.classList.add('locked');
+    summary.innerHTML = '🔒 ตั้งค่าคำนวณ (หลังบ้าน) — ใส่รหัสด้านบนก่อนจึงจะเปิดได้';
+  } else {
+    summary.classList.remove('locked');
+    summary.innerHTML = '⚙️ ตั้งค่าคำนวณ (หลังบ้าน / สูตรราคา)<span class="chev">▾</span>';
+  }
+}
+
 function scCalc(){
   scRenumber();
   const codeOk = hasValidAccessCode();
+  updateAdminLock();
   let total = 0, totalQty = 0, sumHtml = '';
 
   for(let i=0; i<scIDS.length; i++){
@@ -644,9 +661,15 @@ function scCopySummary(){
 
 /* init */
 document.getElementById('stickerAccessCode').addEventListener('input', scCalc);
+document.getElementById('adminSummary').addEventListener('click', function(e){
+  if(!hasValidAccessCode()){
+    e.preventDefault();
+  }
+});
 loadAdminFields();
 bindAdminEvents();
 scAddItem();
+updateAdminLock();
 </script>
 </body>
 </html>
