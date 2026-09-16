@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เครื่องคำนวณราคาสติกเกอร์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green-50:#f4f8f5;
+  --green-100:#e8f2eb;
+  --green-200:#dfe8e0;
+  --green-300:#c8dece;
+  --green-400:#b0ccb8;
+  --accent:#4a7a5c;
+  --accent-deep:#3d6b52;
+  --accent-dark:#2e5c42;
+  --amber:#c98a1f;
+  --amber-bg:#fff5d6;
+  --amber-text:#684a0a;
+  --ink:#1c2e24;
+  --ink-soft:#5b6058;
+  --ink-mute:#8aa494;
+  --line:#d0ddd2;
+  --line-soft:#e0e8e2;
+  --paper:#ffffff;
+  --bg:#eef3ef;
+  --radius:14px;
+  --shadow:0 2px 10px rgba(30,60,40,.06), 0 1px 2px rgba(30,60,40,.08);
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family:'Sarabun',Arial,sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+
+/* Topbar */
+.topbar{
+  background:linear-gradient(120deg,var(--accent-dark) 0%,#1f4230 100%);
+  color:#fff;
+  padding:20px 24px;
+}
+.topbar-inner{
+  max-width:900px;margin:0 auto;display:flex;align-items:center;
+  justify-content:space-between;gap:16px;flex-wrap:wrap;
+}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand-icon{
+  width:42px;height:42px;border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),#7db894);
+  display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;
+}
+.brand h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.2px;}
+.brand p{margin:2px 0 0;font-size:12.5px;color:#bcd9c6;}
+.btn{border:none;border-radius:9px;padding:10px 16px;font-size:13.5px;font-weight:600;cursor:pointer;transition:.15s ease;font-family:inherit;}
+.btn-ghost{background:rgba(255,255,255,.12);color:#fff;}
+.btn-ghost:hover{background:rgba(255,255,255,.2);}
+
+.wrap{max-width:900px;margin:0 auto;padding:24px 18px 150px;}
+
+.card{
+  background:var(--paper);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:20px 20px 22px;margin-bottom:16px;border:1px solid var(--green-100);
+}
+.card h2{font-size:15px;margin:0 0 4px;color:var(--accent-dark);display:flex;align-items:center;gap:9px;}
+.card .sub{font-size:12.5px;color:var(--ink-soft);margin:0 0 16px 33px;}
+.step-num{
+  width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;
+  font-size:12.5px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;
+}
+
+/* Access code */
+.access-card{background:#fbf7ea;border:1px solid #ecdcb6;}
+.field{margin-bottom:0;}
+.field label{font-size:11.5px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:5px;}
+.field input[type=password],.field input[type=text],.field input[type=number]{
+  width:100%;padding:9px 11px;border:1.5px solid var(--line);border-radius:9px;font-size:14px;
+  font-family:inherit;color:var(--ink);background:#fff;outline:none;transition:border-color .15s;
+}
+.field input:focus{border-color:var(--accent);}
+.access-row{display:flex;gap:12px;flex-wrap:wrap;}
+.access-row .field{max-width:220px;flex:1;min-width:160px;}
+.access-warning{
+  margin-top:12px;padding:10px 12px;border:1px solid var(--amber);border-radius:9px;
+  background:var(--amber-bg);color:var(--amber-text);font-size:12.5px;line-height:1.5;display:none;
+}
+.access-ok{
+  margin-top:12px;padding:9px 12px;border:1px solid #b0d6bd;border-radius:9px;
+  background:#eaf6ee;color:var(--accent-dark);font-size:12.5px;font-weight:600;display:none;
+}
+
+/* Item card */
+.item-card{border:1px solid var(--line-soft);border-radius:12px;padding:16px;background:#fff;margin-bottom:12px;box-shadow:0 1px 3px rgba(30,60,40,.05);}
+.item-head{display:flex;gap:8px;align-items:center;margin-bottom:12px;}
+.item-head select{
+  flex:1;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-size:13.5px;font-weight:500;
+  color:var(--ink);background:#fff;font-family:inherit;outline:none;transition:border-color .15s;
+}
+.item-head select:focus{border-color:var(--accent);}
+.item-badge{
+  width:26px;height:26px;border-radius:8px;background:var(--green-100);color:var(--accent-deep);
+  font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.btn-del{
+  width:32px;height:32px;min-width:32px;border:1px solid #eddede;background:#fdf8f8;color:#b05a50;
+  border-radius:8px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:background .15s;
+}
+.btn-del:hover{background:#faecea;}
+.btn-del:disabled{opacity:.35;cursor:not-allowed;}
+.size-row{display:flex;gap:10px;margin-bottom:10px;}
+.size-row>div{flex:1;}
+.item-card label{font-size:11.5px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:5px;}
+.item-card label span{font-weight:400;font-size:10px;color:var(--ink-mute);}
+.qty-field{margin-bottom:10px;max-width:160px;}
+
+.result-box{padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-soft);margin-top:2px;}
+.sz-line{margin-bottom:8px;line-height:1.6;color:var(--ink);}
+.sz-line b{color:var(--ink);}
+.lay-tbl{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:11.5px;}
+.lay-tbl th{background:var(--green-100);color:var(--accent-deep);font-weight:600;padding:6px 8px;text-align:center;border:1px solid var(--line);}
+.lay-tbl th.lbl{text-align:left;color:#7aa480;background:#eef4ef;}
+.lay-tbl td{padding:5px 8px;text-align:center;color:var(--ink);border:1px solid var(--line-soft);background:#fff;}
+.lay-tbl td.lbl{text-align:left;color:#8aa494;background:#f5f8f5;font-size:11px;}
+.lay-tbl .best{background:#dff0e4;color:#2e6645;font-weight:700;}
+.use-line{font-size:11.5px;color:#5a7a62;margin-bottom:5px;line-height:1.9;background:var(--green-100);padding:6px 10px;border-radius:6px;}
+.use-line b{color:var(--accent-deep);}
+.price-line{font-size:12px;color:var(--ink-soft);line-height:2;}
+.price-line b{color:var(--ink);}
+.total-line{color:var(--accent-deep);font-weight:700;}
+.locked-price{color:var(--amber-text);font-weight:600;}
+.placeholder{color:#c4cec8;font-size:12px;padding:4px 0;text-align:center;}
+.warn-size{color:#b05a50;font-size:12px;padding:6px 0;}
+
+.btn-add{
+  display:block;width:100%;padding:12px;background:#fff;color:var(--accent);font-size:13.5px;font-weight:600;
+  border:1.5px dashed var(--green-400);border-radius:10px;cursor:pointer;font-family:inherit;
+  transition:border-color .15s,color .15s,background .15s;
+}
+.btn-add:hover{border-color:var(--accent);color:var(--accent-deep);background:var(--green-50);}
+
+.no-items{font-size:13px;color:#a7b6ac;padding:10px 0;text-align:center;}
+
+/* Summary */
+.sum-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line-soft);font-size:13px;color:var(--ink-soft);gap:10px;}
+.sum-row:last-child{border-bottom:none;}
+.sum-row b{font-weight:700;color:var(--ink);white-space:nowrap;margin-left:10px;}
+.sum-row-name{font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:1px;}
+.sum-row-sub{font-size:11px;color:var(--ink-mute);}
+
+/* Admin */
+details.admin{background:var(--paper);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--green-100);padding:0;overflow:hidden;}
+details.admin summary{list-style:none;cursor:pointer;padding:16px 20px;display:flex;align-items:center;gap:10px;font-weight:700;color:var(--accent-dark);font-size:14px;}
+details.admin summary::-webkit-details-marker{display:none;}
+details.admin summary .chev{margin-left:auto;transition:.2s;color:var(--ink-mute);font-size:13px;}
+details.admin[open] summary .chev{transform:rotate(180deg);}
+.admin-body{padding:2px 20px 20px;border-top:1px solid var(--green-100);}
+.admin-note{font-size:11.5px;color:var(--ink-soft);margin:12px 0 16px;background:var(--green-50);padding:10px 12px;border-radius:8px;}
+.admin-group{margin-bottom:18px;}
+.admin-group h3{font-size:12px;color:var(--accent);text-transform:uppercase;letter-spacing:.4px;margin:0 0 10px;}
+.admin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;}
+.admin-field{background:var(--green-50);border-radius:9px;padding:8px 11px;border:1px solid var(--line-soft);}
+.admin-field label{display:block;font-size:11px;color:var(--ink-soft);margin-bottom:4px;}
+.admin-field .unit-input{display:flex;align-items:center;gap:5px;}
+.admin-field input{width:100%;border:none;background:transparent;font-size:13.5px;font-weight:700;color:var(--ink);padding:0;font-family:inherit;}
+.admin-field input:focus{outline:none;}
+.admin-field .u{font-size:10.5px;color:var(--ink-mute);white-space:nowrap;}
+.admin-material-table{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:6px;}
+.admin-material-table th{background:var(--green-100);color:var(--accent-deep);font-weight:600;padding:6px 7px;text-align:center;border:1px solid var(--line);}
+.admin-material-table td{padding:4px;border:1px solid var(--line-soft);text-align:center;}
+.admin-material-table td.lbl{text-align:left;padding:6px 8px;font-weight:600;color:var(--ink);background:var(--green-50);}
+.admin-material-table input{width:100%;border:1px solid var(--line);border-radius:6px;padding:5px 6px;font-size:12px;font-family:inherit;text-align:center;}
+.admin-material-table input:focus{outline:none;border-color:var(--accent);}
+.admin-reset{font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;font-weight:600;padding:0;font-family:inherit;}
+
+footer{text-align:center;font-size:11.5px;color:var(--ink-mute);padding:18px 0 6px;}
+
+/* Docked bar */
+.bottom-bar{
+  position:fixed;left:0;right:0;bottom:0;z-index:60;
+  background:linear-gradient(100deg,#1f4230 0%,var(--accent-dark) 100%);
+  box-shadow:0 -10px 30px rgba(10,30,20,.28);border-top:1px solid rgba(255,255,255,.08);
+}
+.bottom-bar-inner{max-width:900px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:18px;}
+.bb-stats{display:flex;gap:22px;flex:1;min-width:0;}
+.bb-stat{min-width:0;}
+.bb-stat .l{font-size:10.5px;color:#a9cdb4;font-weight:600;letter-spacing:.2px;white-space:nowrap;}
+.bb-stat .v{font-size:14px;color:#fff;font-weight:700;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bb-divider{width:1px;align-self:stretch;background:rgba(255,255,255,.14);}
+.bb-total{text-align:right;flex-shrink:0;}
+.bb-total .l{font-size:10.5px;color:#a9cdb4;font-weight:600;letter-spacing:.2px;}
+.bb-total .v{font-size:24px;font-weight:800;color:#ffcf5c;line-height:1.15;letter-spacing:.2px;}
+.bb-total .v small{font-size:12.5px;font-weight:700;color:#ffe4a3;margin-left:2px;}
+.bb-actions{display:flex;gap:8px;flex-shrink:0;}
+.bb-icon-btn{
+  width:38px;height:38px;border-radius:9px;background:rgba(255,255,255,.12);color:#fff;border:none;
+  cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:.15s;
+}
+.bb-icon-btn:hover{background:rgba(255,255,255,.2);}
+@media (max-width:640px){
+  .bb-stats{display:none;}
+  .bottom-bar-inner{padding:10px 16px;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-icon">🏷️</div>
+      <div>
+        <h1>เครื่องคำนวณราคาสติกเกอร์</h1>
+        <p>เพิ่มรายการได้หลายชิ้น ระบบคำนวณราคารวมให้อัตโนมัติ</p>
+      </div>
+    </div>
+    <button class="btn btn-ghost" onclick="resetAll()">↺ เริ่มใหม่</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ACCESS CODE -->
+  <div class="card access-card">
+    <h2><span class="step-num">🔒</span>รหัสสำหรับคำนวณราคา</h2>
+    <p class="sub">กรอกรหัสให้ถูกต้องเพื่อดูราคารวมจริง</p>
+    <div class="access-row">
+      <div class="field">
+        <label for="stickerAccessCode">รหัสสำหรับคำนวณ</label>
+        <input type="password" id="stickerAccessCode" maxlength="20" autocomplete="off" spellcheck="false" placeholder="กรอกรหัส">
+      </div>
+    </div>
+    <div class="access-warning" id="stickerAccessWarning">
+      <b>ยังไม่แสดงราคาจริง</b> — กรุณากรอกรหัสสำหรับคำนวณให้ถูกต้อง ราคาด้านล่างเป็นเพียงตัวอย่าง (🔒) จนกว่าจะกรอกรหัสถูกต้อง
+    </div>
+    <div class="access-ok" id="stickerAccessOk">✓ รหัสถูกต้อง — แสดงราคาจริงแล้ว</div>
+  </div>
+
+  <!-- ITEMS -->
+  <div class="card">
+    <h2><span class="step-num">1</span>รายการสติกเกอร์</h2>
+    <p class="sub">เพิ่มได้หลายรายการ แต่ละรายการเลือกวัสดุและกรอกขนาด/จำนวนแยกกัน</p>
+    <div id="scItems"></div>
+    <div class="no-items" id="scNoItems" style="display:none;">ยังไม่มีรายการ</div>
+    <button class="btn-add" onclick="scAddItem()">+ เพิ่มสติกเกอร์อีกรายการ</button>
+  </div>
+
+  <!-- QUOTE SUMMARY -->
+  <div class="card">
+    <h2><span class="step-num">2</span>สรุปใบเสนอราคา</h2>
+    <p class="sub">ราคารวมของทุกรายการที่เพิ่มไว้ด้านบน</p>
+    <div id="scSumList"><div class="no-items">ยังไม่มีรายการ</div></div>
+  </div>
+
+  <!-- ADMIN / BACKEND -->
+  <details class="admin" id="adminPanel">
+    <summary>⚙️ ตั้งค่าคำนวณ (หลังบ้าน / สูตรราคา)<span class="chev">▾</span></summary>
+    <div class="admin-body">
+      <p class="admin-note">แก้ไขค่าที่นี่ได้ตลอดเวลา ระบบจะคำนวณราคาใหม่ทันที (การแก้ไขนี้จะไม่ถูกบันทึกหลังปิดหน้าเว็บ)</p>
+
+      <div class="admin-group">
+        <h3>ขนาดแผ่นวัสดุ &amp; การตัด</h3>
+        <div class="admin-grid">
+          <div class="admin-field">
+            <label>กว้างแผ่น (สั้น)</label>
+            <div class="unit-input"><input type="number" id="cfg_sheetW" step="0.1"><span class="u">ซม.</span></div>
+          </div>
+          <div class="admin-field">
+            <label>ยาวแผ่น</label>
+            <div class="unit-input"><input type="number" id="cfg_sheetH" step="0.1"><span class="u">ซม.</span></div>
+          </div>
+          <div class="admin-field">
+            <label>แผ่น/ตร.ม.</label>
+            <div class="unit-input"><input type="number" id="cfg_sheetsPerSqm" step="0.1"><span class="u">แผ่น</span></div>
+          </div>
+          <div class="admin-field">
+            <label>เผื่อตัด (บวกกว้าง+ยาว)</label>
+            <div class="unit-input"><input type="number" id="cfg_bleed" step="0.01"><span class="u">ซม.</span></div>
+          </div>
+          <div class="admin-field">
+            <label>กว้างสูงสุด/ชิ้น</label>
+            <div class="unit-input"><input type="number" id="cfg_maxW" step="0.1"><span class="u">ซม.</span></div>
+          </div>
+          <div class="admin-field">
+            <label>ยาวสูงสุด/ชิ้น</label>
+            <div class="unit-input"><input type="number" id="cfg_maxH" step="0.1"><span class="u">ซม.</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-group">
+        <h3>ราคาวัสดุตามระดับพื้นที่ (บาท/ตร.ม.)</h3>
+        <table class="admin-material-table">
+          <thead>
+            <tr>
+              <th class="lbl">วัสดุ</th>
+              <th>ไม่เกิน<br><input style="width:44px;padding:2px;border:none;background:transparent;text-align:center;font-weight:700;" id="cfg_tier0" type="number" step="0.1"> ตร.ม.</th>
+              <th>ไม่เกิน<br><input style="width:44px;padding:2px;border:none;background:transparent;text-align:center;font-weight:700;" id="cfg_tier1" type="number" step="0.1"> ตร.ม.</th>
+              <th>ไม่เกิน<br><input style="width:44px;padding:2px;border:none;background:transparent;text-align:center;font-weight:700;" id="cfg_tier2" type="number" step="0.1"> ตร.ม.</th>
+              <th>มากกว่านั้น</th>
+            </tr>
+          </thead>
+          <tbody id="adminMaterialBody"></tbody>
+        </table>
+      </div>
+
+      <button class="admin-reset" onclick="resetSettings()">↺ คืนค่าเริ่มต้นทั้งหมด</button>
+    </div>
+  </details>
+
+  <footer>เครื่องคำนวณราคานี้เป็นเครื่องมือประมาณการ • สร้างขึ้นสำหรับใช้งานภายในร้าน</footer>
+</div>
+
+<!-- Docked summary bar -->
+<div class="bottom-bar">
+  <div class="bottom-bar-inner">
+    <div class="bb-stats">
+      <div class="bb-stat">
+        <div class="l">จำนวนรายการ</div>
+        <div class="v" id="bbItems">0 รายการ</div>
+      </div>
+      <div class="bb-divider"></div>
+      <div class="bb-stat">
+        <div class="l">รวมดวง</div>
+        <div class="v" id="bbQty">0 ดวง</div>
+      </div>
+    </div>
+    <div class="bb-total">
+      <div class="l">ราคารวมทั้งหมด</div>
+      <div class="v" id="bbTotal">0<small>บาท</small></div>
+    </div>
+    <div class="bb-actions">
+      <button class="bb-icon-btn" onclick="scCopySummary()" title="คัดลอกสรุป">📄</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== Material price tiers (บาท/ตร.ม. ตามระดับพื้นที่รวม) ===== */
+const DEFAULT_MATERIALS = [
+  {key:'whiteGloss', title:'สติกเกอร์ กระดาษขาวเงา', prices:[350,300,270,229]},
+  {key:'ppWhiteGloss', title:'สติกเกอร์ PP ขาวเงา', prices:[450,390,350,249]},
+  {key:'ppClear', title:'สติกเกอร์ PP ใส', prices:[460,400,360,269]},
+  {key:'ppMatte', title:'สติกเกอร์ PP ด้าน', prices:[460,400,370,269]},
+];
+const DEFAULT_TIER_BREAKS = [3.9, 10.9, 20.9]; // ตร.ม. ระดับที่ 1–3, ระดับ 4 คือมากกว่านั้น
+
+const DEFAULT_SETTINGS = {
+  sheetW: 28.8,   // กว้างแผ่นวัสดุ (แนวสั้น) ซม.
+  sheetH: 40.2,   // ยาวแผ่นวัสดุ ซม.
+  sheetsPerSqm: 7,// แผ่น/ตร.ม. (ใช้แปลงจำนวนแผ่นเป็นตารางเมตร)
+  bleed: 0.2,     // เผื่อตัด บวกทั้งกว้างและยาว ซม.
+  maxW: 28.6,     // กว้างสูงสุดต่อชิ้น ซม.
+  maxH: 39.5,     // ยาวสูงสุดต่อชิ้น ซม.
+};
+
+let MATERIALS = DEFAULT_MATERIALS.map(m => ({...m, prices:[...m.prices]}));
+let TIER_BREAKS = [...DEFAULT_TIER_BREAKS];
+let S = {...DEFAULT_SETTINGS};
+
+let scUID = 0, scIDS = [];
+
+const ACCESS_CODE = 'jan';
+function hasValidAccessCode(){
+  const el = document.getElementById('stickerAccessCode');
+  return !!el && el.value.trim().toLowerCase() === ACCESS_CODE;
+}
+
+function fmt(n){ return n.toLocaleString('th-TH', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function fmtInt(n){ return Math.round(n).toLocaleString('th-TH'); }
+
+function materialRate(materialKey, sqm){
+  const m = MATERIALS.find(x => x.key === materialKey) || MATERIALS[0];
+  for(let i=0; i<TIER_BREAKS.length; i++){
+    if(sqm <= TIER_BREAKS[i]) return m.prices[i];
+  }
+  return m.prices[m.prices.length-1];
+}
+
+function calcLayout(cw, cl){
+  // Lay ตรง: cw ตามแนวสั้น (sheetW), cl ตามแนวยาว (sheetH)
+  const sLong = Math.floor(S.sheetH / cl), sShort = Math.floor(S.sheetW / cw), sTot = sLong*sShort;
+  // Lay สลับ: cl ตามแนวสั้น (sheetW), cw ตามแนวยาว (sheetH)
+  const wLong = Math.floor(S.sheetH / cw), wShort = Math.floor(S.sheetW / cl), wTot = wLong*wShort;
+  return {
+    s:{long:sLong, short:sShort, tot:sTot},
+    w:{long:wLong, short:wShort, tot:wTot},
+    best: Math.max(sTot, wTot),
+    swapWins: wTot > sTot,
+  };
+}
+
+function scClamp(id, field, max){
+  const el = document.getElementById(field+id);
+  if(el && parseFloat(el.value) > max) el.value = max;
+  scCalc();
+}
+
+function scDelItem(id){
+  const el = document.getElementById('scRow'+id);
+  if(el) el.parentNode.removeChild(el);
+  scIDS = scIDS.filter(x => x !== id);
+  scCalc();
+}
+
+function materialOptionsHtml(selectedKey){
+  return MATERIALS.map(m => `<option value="${m.key}" ${m.key===selectedKey?'selected':''}>${m.title}</option>`).join('');
+}
+
+function scAddItem(){
+  const items = document.getElementById('scItems');
+  if(!items) return;
+  const id = ++scUID;
+  scIDS.push(id);
+  const idx = scIDS.length;
+  const d = document.createElement('div');
+  d.id = 'scRow'+id;
+  d.className = 'item-card';
+  d.innerHTML =
+    '<div class="item-head">'
+    +'<div class="item-badge">'+idx+'</div>'
+    +'<select id="scM'+id+'" oninput="scCalc()">'+materialOptionsHtml(MATERIALS[0].key)+'</select>'
+    +'<button class="btn-del" onclick="scDelItem('+id+')" title="ลบรายการนี้">✕</button>'
+    +'</div>'
+    +'<div class="size-row">'
+    +'<div><label>กว้าง (ซม.) <span>สูงสุด '+S.maxW+'</span></label>'
+    +'<input class="inp" type="number" id="scW'+id+'" min="0.1" max="'+S.maxW+'" step="0.1" placeholder="0.0" oninput="scCalc()" onblur="scClamp('+id+',\'scW\','+S.maxW+')"></div>'
+    +'<div><label>ยาว (ซม.) <span>สูงสุด '+S.maxH+'</span></label>'
+    +'<input class="inp" type="number" id="scL'+id+'" min="0.1" max="'+S.maxH+'" step="0.1" placeholder="0.0" oninput="scCalc()" onblur="scClamp('+id+',\'scL\','+S.maxH+')"></div>'
+    +'</div>'
+    +'<div class="qty-field"><label>จำนวน (ดวง)</label>'
+    +'<input class="inp" type="number" id="scQ'+id+'" min="1" step="1" value="1" oninput="scCalc()"></div>'
+    +'<div class="result-box" id="scRES'+id+'"><div class="placeholder">— กรอกขนาดเพื่อคำนวณ —</div></div>';
+  items.appendChild(d);
+  scCalc();
+}
+
+function scRenumber(){
+  scIDS.forEach((id, i) => {
+    const badge = document.querySelector('#scRow'+id+' .item-badge');
+    if(badge) badge.textContent = i+1;
+    const delBtn = document.querySelector('#scRow'+id+' .btn-del');
+    if(delBtn) delBtn.disabled = false;
+  });
+}
+
+function scCalc(){
+  scRenumber();
+  const codeOk = hasValidAccessCode();
+  let total = 0, totalQty = 0, sumHtml = '';
+
+  for(let i=0; i<scIDS.length; i++){
+    const id = scIDS[i];
+    const mEl = document.getElementById('scM'+id), wEl = document.getElementById('scW'+id);
+    const lEl = document.getElementById('scL'+id), qEl = document.getElementById('scQ'+id);
+    const resEl = document.getElementById('scRES'+id);
+    if(!mEl || !wEl || !lEl || !qEl || !resEl) continue;
+
+    const m = mEl.value;
+    const mTitle = (MATERIALS.find(x=>x.key===m)||MATERIALS[0]).title;
+    const w = parseFloat(wEl.value) || 0, l = parseFloat(lEl.value) || 0;
+    const q = Math.max(1, parseInt(qEl.value) || 1);
+
+    if(w <= 0 || l <= 0){
+      resEl.innerHTML = '<div class="placeholder">— กรอกขนาดเพื่อคำนวณ —</div>';
+      continue;
+    }
+    if(w > S.maxW || l > S.maxH){
+      resEl.innerHTML = '<div class="warn-size">⚠️ ขนาดเกินสูงสุดที่ตัดได้ ('+S.maxW+'×'+S.maxH+' ซม.) กรุณาปรับขนาด</div>';
+      continue;
+    }
+
+    const cw = parseFloat((w + S.bleed).toFixed(3)), cl = parseFloat((l + S.bleed).toFixed(3));
+    const lay = calcLayout(cw, cl);
+
+    const sheets_s = lay.s.tot > 0 ? Math.ceil(q / lay.s.tot) : 0;
+    const sqm_s = lay.s.tot > 0 ? sheets_s / S.sheetsPerSqm : 0;
+    const sheets_w = lay.w.tot > 0 ? Math.ceil(q / lay.w.tot) : 0;
+    const sqm_w = lay.w.tot > 0 ? sheets_w / S.sheetsPerSqm : 0;
+
+    const sheets = lay.best > 0 ? Math.ceil(q / lay.best) : 0;
+    const sqm = sheets / S.sheetsPerSqm;
+    const sqmDisplay = Math.ceil(sqm);
+    const rate = materialRate(m, sqm);
+    const line = sqmDisplay * rate;
+
+    const sc = lay.swapWins ? '' : ' class="best"', wc = lay.swapWins ? ' class="best"' : '';
+    const sdpm = lay.s.tot * S.sheetsPerSqm, wdpm = lay.w.tot * S.sheetsPerSqm;
+    const sqmS_str = lay.s.tot > 0 ? fmt(sqm_s) : '-';
+    const sqmW_str = lay.w.tot > 0 ? fmt(sqm_w) : '-';
+
+    const priceCell = codeOk
+      ? '<div class="price-line">ราคา/ตร.ม.: <b>'+fmt(rate)+' บาท</b></div>'
+        + '<div class="price-line">ราคารวม: <b class="total-line">'+fmt(line)+' บาท</b></div>'
+      : '<div class="price-line locked-price">🔒 กรอกรหัสด้านบนเพื่อดูราคา</div>';
+
+    resEl.innerHTML =
+      '<div class="sz-line">ขนาดตัดจริง (บวกเผื่อตัด '+S.bleed+' ซม.): <b>'+fmt(cw)+' × '+fmt(cl)+' ซม.</b></div>'
+      +'<table class="lay-tbl">'
+      +'<tr><th class="lbl"></th><th'+sc+'>Lay ตรง</th><th'+wc+'>Lay สลับ</th></tr>'
+      +'<tr><td class="lbl">ยาว (แถว)</td><td'+sc+'>'+lay.s.long+'</td><td'+wc+'>'+lay.w.long+'</td></tr>'
+      +'<tr><td class="lbl">สั้น (คอลัมน์)</td><td'+sc+'>'+lay.s.short+'</td><td'+wc+'>'+lay.w.short+'</td></tr>'
+      +'<tr><td class="lbl">ดวง/แผ่น</td><td'+sc+'>'+lay.s.tot+'</td><td'+wc+'>'+lay.w.tot+'</td></tr>'
+      +'<tr><td class="lbl">ดวง/ตร.ม.</td><td'+sc+'>'+sdpm+'</td><td'+wc+'>'+wdpm+'</td></tr>'
+      +'</table>'
+      +'<div class="use-line">✔ ใช้ <b>Lay '+(lay.swapWins?'สลับ':'ตรง')+'</b> &nbsp;·&nbsp; '+sheets+' แผ่น &nbsp;·&nbsp; <b>'+fmt(sqmDisplay)+' ตร.ม.</b> &nbsp;·&nbsp; '+lay.best+' ดวง/แผ่น</div>'
+      +priceCell;
+
+    total += line;
+    totalQty += q;
+    sumHtml += '<div class="sum-row">'
+      +'<div><div class="sum-row-name">'+mTitle+'</div>'
+      +'<div class="sum-row-sub">'+fmt(cw)+'×'+fmt(cl)+' ซม. × '+q+' ดวง &nbsp;·&nbsp; '+sheets+' แผ่น</div></div>'
+      +'<b>'+(codeOk ? fmt(line)+' บาท' : '🔒')+'</b>'
+      +'</div>';
+  }
+
+  const sl = document.getElementById('scSumList');
+  const noItems = document.getElementById('scNoItems');
+  if(sl) sl.innerHTML = scIDS.length ? sumHtml : '<div class="no-items">ยังไม่มีรายการ</div>';
+  if(noItems) noItems.style.display = scIDS.length ? 'none' : 'block';
+
+  document.getElementById('bbItems').textContent = scIDS.length + ' รายการ';
+  document.getElementById('bbQty').textContent = fmtInt(totalQty) + ' ดวง';
+  document.getElementById('bbTotal').innerHTML = codeOk ? (fmtInt(total)+'<small>บาท</small>') : '🔒<small>ใส่รหัส</small>';
+
+  const warnEl = document.getElementById('stickerAccessWarning');
+  const okEl = document.getElementById('stickerAccessOk');
+  const codeEntered = document.getElementById('stickerAccessCode').value.trim().length > 0;
+  if(warnEl) warnEl.style.display = (!codeOk && codeEntered) ? 'block' : (codeOk ? 'none' : 'block');
+  if(okEl) okEl.style.display = codeOk ? 'block' : 'none';
+  if(warnEl && codeOk) warnEl.style.display = 'none';
+
+  window._scLastCalc = {items: scIDS.length, totalQty, total, codeOk};
+}
+
+/* ===== Admin panel ===== */
+function renderAdminMaterials(){
+  const body = document.getElementById('adminMaterialBody');
+  body.innerHTML = MATERIALS.map((m, mi) => {
+    const cells = m.prices.map((p, pi) =>
+      `<td><input type="number" step="1" data-mi="${mi}" data-pi="${pi}" class="mat-price-input" value="${p}"></td>`
+    ).join('');
+    return `<tr><td class="lbl">${m.title}</td>${cells}</tr>`;
+  }).join('');
+  body.querySelectorAll('.mat-price-input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const mi = parseInt(inp.dataset.mi), pi = parseInt(inp.dataset.pi);
+      const val = parseFloat(inp.value);
+      MATERIALS[mi].prices[pi] = isNaN(val) ? 0 : val;
+      scCalc();
+    });
+  });
+}
+
+function loadAdminFields(){
+  document.getElementById('cfg_sheetW').value = S.sheetW;
+  document.getElementById('cfg_sheetH').value = S.sheetH;
+  document.getElementById('cfg_sheetsPerSqm').value = S.sheetsPerSqm;
+  document.getElementById('cfg_bleed').value = S.bleed;
+  document.getElementById('cfg_maxW').value = S.maxW;
+  document.getElementById('cfg_maxH').value = S.maxH;
+  document.getElementById('cfg_tier0').value = TIER_BREAKS[0];
+  document.getElementById('cfg_tier1').value = TIER_BREAKS[1];
+  document.getElementById('cfg_tier2').value = TIER_BREAKS[2];
+  renderAdminMaterials();
+}
+
+function bindAdminEvents(){
+  const settingMap = {
+    cfg_sheetW:'sheetW', cfg_sheetH:'sheetH', cfg_sheetsPerSqm:'sheetsPerSqm',
+    cfg_bleed:'bleed', cfg_maxW:'maxW', cfg_maxH:'maxH',
+  };
+  Object.entries(settingMap).forEach(([id, key]) => {
+    document.getElementById(id).addEventListener('input', () => {
+      const val = parseFloat(document.getElementById(id).value);
+      S[key] = isNaN(val) ? 0 : val;
+      scCalc();
+    });
+  });
+  ['cfg_tier0','cfg_tier1','cfg_tier2'].forEach((id, i) => {
+    document.getElementById(id).addEventListener('input', () => {
+      const val = parseFloat(document.getElementById(id).value);
+      TIER_BREAKS[i] = isNaN(val) ? 0 : val;
+      scCalc();
+    });
+  });
+}
+
+function resetSettings(){
+  MATERIALS = DEFAULT_MATERIALS.map(m => ({...m, prices:[...m.prices]}));
+  TIER_BREAKS = [...DEFAULT_TIER_BREAKS];
+  S = {...DEFAULT_SETTINGS};
+  loadAdminFields();
+  scCalc();
+}
+
+function resetAll(){
+  document.getElementById('scItems').innerHTML = '';
+  scIDS = [];
+  scUID = 0;
+  document.getElementById('stickerAccessCode').value = '';
+  scAddItem();
+}
+
+function scCopySummary(){
+  const c = window._scLastCalc;
+  if(!c || !c.codeOk){
+    alert('กรอกรหัสให้ถูกต้องก่อนคัดลอกสรุปราคา');
+    return;
+  }
+  const rows = scIDS.map(id => {
+    const mEl = document.getElementById('scM'+id), wEl = document.getElementById('scW'+id);
+    const lEl = document.getElementById('scL'+id), qEl = document.getElementById('scQ'+id);
+    if(!mEl) return null;
+    const mTitle = (MATERIALS.find(x=>x.key===mEl.value)||MATERIALS[0]).title;
+    const w = parseFloat(wEl.value)||0, l = parseFloat(lEl.value)||0, q = parseInt(qEl.value)||1;
+    if(w<=0||l<=0) return null;
+    return `${mTitle} ${fmt(w)}×${fmt(l)} ซม. × ${q} ดวง`;
+  }).filter(Boolean);
+  const text = [
+    ...rows,
+    '— — —',
+    `จำนวนรายการ: ${c.items} รายการ (รวม ${fmtInt(c.totalQty)} ดวง)`,
+    `ราคารวมทั้งหมด: ${fmtInt(c.total)} บาท`,
+  ].join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target.closest('button');
+    const original = btn.textContent;
+    btn.textContent = '✅';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  }).catch(() => { alert(text); });
+}
+
+/* init */
+document.getElementById('stickerAccessCode').addEventListener('input', scCalc);
+loadAdminFields();
+bindAdminEvents();
+scAddItem();
+</script>
+</body>
+</html>
