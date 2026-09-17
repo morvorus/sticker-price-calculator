@@ -231,22 +231,6 @@ footer{text-align:center;font-size:11.5px;color:var(--ink-mute);padding:18px 0 6
 
 <div class="wrap">
 
-  <!-- ACCESS CODE -->
-  <div class="card access-card">
-    <h2><span class="step-num">🔒</span>รหัสสำหรับคำนวณราคา</h2>
-    <p class="sub">กรอกรหัสให้ถูกต้องเพื่อดูราคารวมจริง</p>
-    <div class="access-row">
-      <div class="field">
-        <label for="stickerAccessCode">รหัสสำหรับคำนวณ</label>
-        <input type="password" id="stickerAccessCode" maxlength="20" autocomplete="off" spellcheck="false" placeholder="กรอกรหัส">
-      </div>
-    </div>
-    <div class="access-warning" id="stickerAccessWarning">
-      <b>ยังไม่แสดงราคาจริง</b> — กรุณากรอกรหัสสำหรับคำนวณให้ถูกต้อง ราคาด้านล่างเป็นเพียงตัวอย่าง (🔒) จนกว่าจะกรอกรหัสถูกต้อง
-    </div>
-    <div class="access-ok" id="stickerAccessOk">✓ รหัสถูกต้อง — แสดงราคาจริงแล้ว</div>
-  </div>
-
   <!-- ITEMS -->
   <div class="card">
     <h2><span class="step-num">1</span>รายการสติกเกอร์</h2>
@@ -261,6 +245,22 @@ footer{text-align:center;font-size:11.5px;color:var(--ink-mute);padding:18px 0 6
     <h2><span class="step-num">2</span>สรุปใบเสนอราคา</h2>
     <p class="sub">ราคารวมของทุกรายการที่เพิ่มไว้ด้านบน</p>
     <div id="scSumList"><div class="no-items">ยังไม่มีรายการ</div></div>
+  </div>
+
+  <!-- ACCESS CODE - เฉพาะตอนจะเปิดแก้สูตรราคาหลังบ้านเท่านั้น ไม่เกี่ยวกับการดูราคาด้านบน -->
+  <div class="card access-card">
+    <h2><span class="step-num">🔒</span>รหัสสำหรับแก้ไขสูตรราคา (หลังบ้าน)</h2>
+    <p class="sub">กรอกรหัสให้ถูกต้องเฉพาะตอนต้องการเปิดแก้ไขสูตรราคาด้านล่างเท่านั้น ไม่กรอกก็ดูราคาปกติได้</p>
+    <div class="access-row">
+      <div class="field">
+        <label for="stickerAccessCode">รหัสสำหรับแก้ไขหลังบ้าน</label>
+        <input type="password" id="stickerAccessCode" maxlength="20" autocomplete="off" spellcheck="false" placeholder="กรอกรหัส">
+      </div>
+    </div>
+    <div class="access-warning" id="stickerAccessWarning">
+      <b>ยังไม่ปลดล็อก</b> — กรุณากรอกรหัสให้ถูกต้องเพื่อเปิดแก้ไขสูตรราคาด้านล่าง
+    </div>
+    <div class="access-ok" id="stickerAccessOk">✓ รหัสถูกต้อง — เปิดแก้ไขสูตรราคาได้แล้ว</div>
   </div>
 
   <!-- ADMIN / BACKEND -->
@@ -539,10 +539,8 @@ function scCalc(){
     const sqmS_str = lay.s.tot > 0 ? fmt(sqm_s) : '-';
     const sqmW_str = lay.w.tot > 0 ? fmt(sqm_w) : '-';
 
-    const priceCell = codeOk
-      ? '<div class="price-line">ราคา/ตร.ม.: <b>'+fmt(rate)+' บาท</b></div>'
-        + '<div class="price-line">ราคารวม: <b class="total-line">'+fmt(line)+' บาท</b></div>'
-      : '<div class="price-line locked-price">🔒 กรอกรหัสด้านบนเพื่อดูราคา</div>';
+    const priceCell = '<div class="price-line">ราคา/ตร.ม.: <b>'+fmt(rate)+' บาท</b></div>'
+        + '<div class="price-line">ราคารวม: <b class="total-line">'+fmt(line)+' บาท</b></div>';
 
     resEl.innerHTML =
       '<div class="sz-line">ขนาดตัดจริง (บวกเผื่อตัด '+S.bleed+' ซม.): <b>'+fmt(cw)+' × '+fmt(cl)+' ซม.</b></div>'
@@ -561,7 +559,7 @@ function scCalc(){
     sumHtml += '<div class="sum-row">'
       +'<div><div class="sum-row-name">'+mTitle+'</div>'
       +'<div class="sum-row-sub">'+fmt(cw)+'×'+fmt(cl)+' ซม. × '+q+' ดวง &nbsp;·&nbsp; '+sheets+' แผ่น</div></div>'
-      +'<b>'+(codeOk ? fmt(line)+' บาท' : '🔒')+'</b>'
+      +'<b>'+fmt(line)+' บาท</b>'
       +'</div>';
   }
 
@@ -572,8 +570,9 @@ function scCalc(){
 
   document.getElementById('bbItems').textContent = scIDS.length + ' รายการ';
   document.getElementById('bbQty').textContent = fmtInt(totalQty) + ' ดวง';
-  document.getElementById('bbTotal').innerHTML = codeOk ? (fmtInt(total)+'<small>บาท</small>') : '🔒<small>ใส่รหัส</small>';
+  document.getElementById('bbTotal').innerHTML = fmtInt(total)+'<small>บาท</small>';
 
+  // access code ด้านล่างตอนนี้ใช้เฉพาะปลดล็อกแผงแก้สูตรราคาหลังบ้านเท่านั้น ไม่เกี่ยวกับการแสดงราคาด้านบนแล้ว
   const warnEl = document.getElementById('stickerAccessWarning');
   const okEl = document.getElementById('stickerAccessOk');
   const codeEntered = document.getElementById('stickerAccessCode').value.trim().length > 0;
@@ -657,8 +656,8 @@ function resetAll(){
 
 function scCopySummary(){
   const c = window._scLastCalc;
-  if(!c || !c.codeOk){
-    alert('กรอกรหัสให้ถูกต้องก่อนคัดลอกสรุปราคา');
+  if(!c || !c.items){
+    alert('ยังไม่มีรายการให้คัดลอก');
     return;
   }
   const rows = scIDS.map(id => {
