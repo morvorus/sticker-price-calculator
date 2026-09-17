@@ -401,10 +401,33 @@ function calcLayout(cw, cl){
   };
 }
 
-function scClamp(id, field, max){
+function scClamp(id, field, maxKey){
+  // maxKey คือชื่อคีย์ ('maxW'/'maxH') ไม่ใช่ตัวเลขที่ baked ไว้ตอนสร้างแถว เพื่อให้ใช้ค่า
+  // ขีดจำกัดล่าสุดจากแอดมินเสมอ แม้เป็นแถวที่ถูกสร้างไว้ก่อนแอดมินจะแก้ค่า
+  const max = (typeof maxKey === 'string') ? S[maxKey] : maxKey;
   const el = document.getElementById(field+id);
   if(el && parseFloat(el.value) > max) el.value = max;
-  scCalc();
+  // scCalc() ขยายบล็อกผลลัพธ์ให้สูงขึ้นทันที (จาก warn-size สั้นๆ เป็นตารางผลลัพธ์เต็ม) ซึ่งถ้าเกิดขึ้น
+  // ระหว่าง mousedown->mouseup ของการคลิกไปยังปุ่ม/องค์ประกอบอื่น (เช่น #adminSummary) จะทำให้
+  // ตำแหน่งใต้เคอร์เซอร์ขยับหนีจนคลิกพลาดเป้า — หน่วงไปเฟรมถัดไปเพื่อให้คลิกปัจจุบันจบก่อน
+  requestAnimationFrame(scCalc);
+}
+
+// อัปเดต label "สูงสุด NN" และ attribute max ของทุกแถวที่มีอยู่แล้วให้ตรงกับ S.maxW/S.maxH ปัจจุบัน
+// (เดิมค่าพวกนี้ถูก baked ไว้ตอน scAddItem() สร้างแถว ทำให้แถวเก่าไม่อัปเดตตามเมื่อแอดมินแก้ขนาดสูงสุด)
+function refreshItemSizeLimits(){
+  scIDS.forEach(id=>{
+    const wInput = document.getElementById('scW'+id);
+    const lInput = document.getElementById('scL'+id);
+    if(wInput) wInput.max = S.maxW;
+    if(lInput) lInput.max = S.maxH;
+  });
+  // label text ("สูงสุด NN") อยู่ใน <span> ถัดจาก label ของแต่ละช่อง — อัปเดตผ่าน DOM โดยตรง
+  document.querySelectorAll('.size-row').forEach(row=>{
+    const spans = row.querySelectorAll('label span');
+    if(spans[0]) spans[0].textContent = 'สูงสุด ' + S.maxW;
+    if(spans[1]) spans[1].textContent = 'สูงสุด ' + S.maxH;
+  });
 }
 
 function scDelItem(id){
@@ -435,9 +458,9 @@ function scAddItem(){
     +'</div>'
     +'<div class="size-row">'
     +'<div><label>กว้าง (ซม.) <span>สูงสุด '+S.maxW+'</span></label>'
-    +'<input class="inp" type="number" id="scW'+id+'" min="0.1" max="'+S.maxW+'" step="0.1" placeholder="0.0" oninput="scCalc()" onblur="scClamp('+id+',\'scW\','+S.maxW+')"></div>'
+    +'<input class="inp" type="number" id="scW'+id+'" min="0.1" max="'+S.maxW+'" step="0.1" placeholder="0.0" oninput="scCalc()" onblur="scClamp('+id+',\'scW\',\'maxW\')"></div>'
     +'<div><label>ยาว (ซม.) <span>สูงสุด '+S.maxH+'</span></label>'
-    +'<input class="inp" type="number" id="scL'+id+'" min="0.1" max="'+S.maxH+'" step="0.1" placeholder="0.0" oninput="scCalc()" onblur="scClamp('+id+',\'scL\','+S.maxH+')"></div>'
+    +'<input class="inp" type="number" id="scL'+id+'" min="0.1" max="'+S.maxH+'" step="0.1" placeholder="0.0" oninput="scCalc()" onblur="scClamp('+id+',\'scL\',\'maxH\')"></div>'
     +'</div>'
     +'<div class="qty-field"><label>จำนวน (ดวง)</label>'
     +'<input class="inp" type="number" id="scQ'+id+'" min="1" step="1" value="1" oninput="scCalc()"></div>'
@@ -602,6 +625,7 @@ function bindAdminEvents(){
     document.getElementById(id).addEventListener('input', () => {
       const val = parseFloat(document.getElementById(id).value);
       S[key] = isNaN(val) ? 0 : val;
+      if(key === 'maxW' || key === 'maxH') refreshItemSizeLimits();
       scCalc();
     });
   });
@@ -619,6 +643,7 @@ function resetSettings(){
   TIER_BREAKS = [...DEFAULT_TIER_BREAKS];
   S = {...DEFAULT_SETTINGS};
   loadAdminFields();
+  refreshItemSizeLimits();
   scCalc();
 }
 
